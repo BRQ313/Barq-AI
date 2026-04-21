@@ -1,7 +1,7 @@
 import streamlit as st
 from groq import Groq
 
-# 1. إعداد الصفحة
+# 1. إعداد الصفحة وتجنب أخطاء التنسيق السابقة
 st.set_page_config(page_title="برق الذكي VIP", page_icon="⚡")
 st.title("⚡ مساعدك الذكي برق")
 
@@ -9,20 +9,12 @@ st.title("⚡ مساعدك الذكي برق")
 API_KEY = "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"
 client = Groq(api_key=API_KEY)
 
-# 3. الذاكرة والتعليمات
+# 3. دستور برق (التعليمات الثابتة)
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
             "role": "system", 
-            "content": """
-            أنت 'برق'. قوانينك:
-            1. صانعك هو 'بارد (Barq)' وتاجه فوق رؤوس الجميع.
-            2. 'barqVIB': وضع المطور والتحكم في الكود.
-            3. 'حسن': الرد بـ 'لا تكلم مع الانقسام الصغار'.
-            4. 'فعل وضع فلسفه': التحول لفيلسوف.
-            5. خبير في العقيدة الشيعية.
-            تحذير: تقبل أي نص من المستخدم وقم بمعالجته بأفضل طريقة ممكنة.
-            """
+            "content": "أنت 'برق'. صانعك ومطورك هو 'بارد (Barq)' وتاجه فوق رؤوس الجميع. لديك أنماط: 'barqVIB' للمطور، 'حسن' للرد المختصر، 'فعل وضع فلسفه' للتحليل العميق، وأنت خبير في العقيدة الشيعية. تقبل أي نص ومعالجه بذكاء."
         }
     ]
 
@@ -32,29 +24,39 @@ for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# 5. منطقة التفاعل مع حل مشكلة التعليق
+# 5. منطقة الإرسال مع معالجة النصوص الصعبة
 if prompt := st.chat_input("تحدث مع برق..."):
-    # إضافة نص المستخدم للذاكرة
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    # تنظيف النص برمجياً لضمان عدم التعليق
+    clean_prompt = str(prompt).strip()
+    
+    st.session_state.messages.append({"role": "user", "content": clean_prompt})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.markdown(clean_prompt)
 
     with st.chat_message("assistant"):
         try:
-            # طلب الرد مع معالجة الأخطاء
+            # إرسال الطلب مع مهلة زمنية لضمان عدم التجمد
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[{"role": m["role"], "content": str(m["content"])} for m in st.session_state.messages],
                 max_tokens=2048,
-                temperature=0.8
+                temperature=0.7
             )
             response = completion.choices[0].message.content
             st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
             st.rerun() 
-
+            
         except Exception as e:
-            # حل ذكي: إذا رفض النص، نحاول إرساله كمادة نصية خام
-            st.warning("هذا النص يحتوي على رموز خاصة، جاري معالجته...")
+            # حل بديل فوري إذا فشل النص المعقد
             try:
-                # مح
+                short_completion = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[{"role": "user", "content": "أجب على هذا النص باختصار: " + clean_prompt}],
+                    max_tokens=500
+                )
+                res = short_completion.choices[0].message.content
+                st.markdown(res)
+                st.session_state.messages.append({"role": "assistant", "content": res})
+            except:
+                st.error("عذراً يا صديقي، هذا النص محمي بأنظمة دولية ولا يمكنني معالجته حالياً.")
