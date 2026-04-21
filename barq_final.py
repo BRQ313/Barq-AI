@@ -5,7 +5,7 @@ from groq import Groq
 st.set_page_config(page_title="برق الذكي", page_icon="⚡")
 st.title("⚡ مساعدك الذكي برق")
 
-# وضع المفتاح مباشرة في الكود لتجنب أخطاء الإعدادات
+# وضع المفتاح مباشرة
 API_KEY = "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"
 client = Groq(api_key=API_KEY)
 
@@ -26,6 +26,7 @@ if prompt := st.chat_input("تحدث مع برق..."):
 
     with st.chat_message("assistant"):
         try:
+            # هنا التعديل: نطلب الرد مباشرة بدون شروط معقدة
             completion = client.chat.completions.create(
                 model="llama3-8b-8192",
                 messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
@@ -34,4 +35,5 @@ if prompt := st.chat_input("تحدث مع برق..."):
             st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
         except Exception as e:
-            st.error("أنا جاهز، أعد إرسال رسالتك الآن")
+            # في حال وجود خطأ حقيقي، سنعرف ما هو
+            st.error(f"عذراً، حدث خطأ تقني: {e}")
