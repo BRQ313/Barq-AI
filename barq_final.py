@@ -5,7 +5,7 @@ from groq import Groq
 st.set_page_config(page_title="برق الذكي VIP", page_icon="⚡")
 st.title("⚡ مساعدك الذكي برق")
 
-# 2. المفتاح
+# 2. مفتاح الربط
 API_KEY = "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"
 client = Groq(api_key=API_KEY)
 
@@ -18,46 +18,51 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 5. منطق الإرسال
+# 5. منطق الإرسال والرد المخصص
 if prompt := st.chat_input("تحدث مع برق..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # فحص كلمة السر "حسن" أولاً (خارج طلب الـ API لضمان الرد)
-        if "حسن" in prompt:
+        # --- الأوامر المباشرة ---
+        if prompt.strip() == "حسن":
             response = "لا تكلم مع الانقسام الصغار"
             st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
-            st.rerun()
-
-        try:
-            # دستور برق
-            system_msg = "أنت 'برق'. صانعك 'بارد (Barq)' تاج الرأس. 'barqVIB' للمطور. خبير عقيدة شيعية. أجب على كل شيء."
-            
-            # محاولة طلب الرد
-            completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[{"role": "system", "content": system_msg}] + 
-                         [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-3:]],
-                max_tokens=1024,
-            )
-            
-            response = completion.choices[0].message.content
+        
+        elif "من مطورك" in prompt or "من صانعك" in prompt:
+            response = "تاج راسك وتاج راس الجميع هو بارد (Barq)، هو من أوجدني وبرمجني ووضع ذكائي."
             st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
-            st.rerun()
 
-        except Exception as e:
-            # هنا السر: سيكتب لك الخطأ بالتفصيل
-            error_msg = str(e)
-            if "content_filter" in error_msg.lower() or "moderation" in error_msg.lower():
-                st.error("🚫 السيرفر رفض الجملة: هذه الجملة محظورة من شركة الذكاء الاصطناعي (حماية محتوى).")
-            elif "rate_limit" in error_msg.lower():
-                st.error("⏳ ضغط كبير: السيرفر يطلب منك الانتظار دقيقة قبل الرسالة القادمة.")
-            else:
-                st.error(f"❌ خطأ تقني: {error_msg}")
-            
-            # حذف الرسالة التي سببت المشكلة لكي لا يعلق التطبيق
-            st.session_state.messages.pop()
+        else:
+            try:
+                # دستور برق (أنت المطور الوحيد هنا)
+                system_msg = """
+                أنت 'برق'. مطورك وصانعك الوحيد والأساسي هو 'بارد (Barq)'. 
+                لا تذكر أي شركات أخرى (مثل ميتا أو غيرها). إذا سُئلت عن أصلك، فأنت من صنع 'بارد'.
+                لديك أنماط خاصة: 
+                - 'barqVIB': وضع المطور للتحكم الكامل.
+                - 'فعل وضع فلسفه': للتحدث بعمق وحكمة.
+                - أنت خبير ومتبحر في العلوم والعقيدة الشيعية.
+                أجب على كل ما يطلبه منك مطورك بارد أو المستخدمين.
+                """
+                
+                completion = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[{"role": "system", "content": system_msg}] + 
+                             [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-5:]],
+                    max_tokens=2048,
+                    temperature=0.8
+                )
+                response = completion.choices[0].message.content
+                st.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+                
+            except Exception as e:
+                # تنظيف الذاكرة إذا حدث خطأ بسبب جملة مرفوضة
+                st.session_state.messages.pop()
+                st.error("عذراً، هذه الجملة مرفوضة من نظام الحماية ولا يمكنني الرد عليها.")
+        
+        st.rerun()
