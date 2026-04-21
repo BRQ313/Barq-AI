@@ -1,40 +1,40 @@
 import streamlit as st
 from groq import Groq
 
+# إعدادات الصفحة
 st.set_page_config(page_title="برق الذكي", page_icon="⚡")
 st.title("⚡ مساعدك الذكي برق")
 
-# التأكد من وجود مفتاح السر
+# تفعيل المحرك
 if "GROQ_API_KEY" in st.secrets:
     client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 else:
-    st.error("الرجاء إضافة GROQ_API_KEY في الإعدادات")
+    st.error("أضف مفتاح السر في الإعدادات أولاً!")
     st.stop()
 
-# تهيئة ذاكرة المحادثة إذا كانت فارغة
+# إنشاء الذاكرة
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# عرض الرسائل السابقة
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# عرض المحادثة
+for msg in st.session_state.messages:
+    st.chat_message(msg["role"]).write(msg["content"])
 
-# استقبال رسالة المستخدم
-if prompt := st.chat_input("اكتب رسالتك هنا..."):
+# منطقة الكتابة
+if prompt := st.chat_input():
+    # حفظ رسالتك
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    # طلب الرد من الذكاء الاصطناعي
+    st.chat_message("user").write(prompt)
+    
+    # طلب الرد
     with st.chat_message("assistant"):
         try:
             response = client.chat.completions.create(
                 model="llama3-8b-8192",
-                messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
+                messages=st.session_state.messages
             )
-            full_response = response.choices[0].message.content
-            st.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            answer = response.choices[0].message.content
+            st.write(answer)
+            st.session_state.messages.append({"role": "assistant", "content": answer})
         except Exception as e:
-            st.error(f"حدث خطأ: {e}")
+            st.error("تعثر برق قليلاً.. حاول مجدداً")
