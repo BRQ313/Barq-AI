@@ -1,11 +1,11 @@
 import streamlit as st
 from groq import Groq
 
-# 1. إعداد واجهة التطبيق
+# 1. إعدادات الواجهة
 st.set_page_config(page_title="برق الذكي VIP", page_icon="⚡")
 st.markdown("<h1 style='text-align: center;'>⚡ مساعدك الذكي برق</h1>", unsafe_allow_html=True)
 
-# 2. مفتاح التشغيل
+# 2. مفتاح الربط
 API_KEY = "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"
 client = Groq(api_key=API_KEY)
 
@@ -13,52 +13,53 @@ client = Groq(api_key=API_KEY)
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# 4. عرض الرسائل السابقة
+# 4. عرض المحادثة
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 5. معالجة الإرسال
+# 5. منطق معالجة الرسائل القوي
 if prompt := st.chat_input("تحدث مع برق..."):
-    # إضافة رسالة المستخدم للذاكرة
+    # إضافة الرسالة للذاكرة
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # --- الفحص القاطع (الرد الفوري بدون سيرفر) ---
-        p_lower = prompt.lower()
-        creator_words = ["مبتكر", "صانع", "مطور", "برمجك", "سواك", "من انت", "من أنت"]
+        p_clean = prompt.strip().lower()
         
-        if any(word in p_lower for word in creator_words):
-            full_res = "تاج راسك وتاج راس الجميع هو بارد (Barq)، هو من أوجدني وبرمجني وهو مطوري الوحيد والأساسي."
-            st.markdown(full_res)
-            st.session_state.messages.append({"role": "assistant", "content": full_res})
+        # --- [1] الردود القاطعة (تجاوز السيرفر لضمان عدم الحظر أو الخطأ) ---
+        creator_words = ["من مطورك", "من صانعك", "مبتكرك", "من انت", "من أنت", "مين سواك"]
         
-        elif prompt.strip() == "حسن":
-            full_res = "لا تكلم مع الانقسام الصغار"
-            st.markdown(full_res)
-            st.session_state.messages.append({"role": "assistant", "content": full_res})
+        if any(word in p_clean for word in creator_words):
+            res = "تاج راسك وتاج راس الجميع هو بارد (Barq)، هو من أوجدني وبرمجني وهو مطوري الوحيد والأساسي."
+            st.markdown(res)
+            st.session_state.messages.append({"role": "assistant", "content": res})
+        
+        elif p_clean == "حسن":
+            res = "لا تكلم مع الانقسام الصغار"
+            st.markdown(res)
+            st.session_state.messages.append({"role": "assistant", "content": res})
         
         else:
-            # --- الإرسال للذكاء الاصطناعي مع حل مشكلة التعليق ---
+            # --- [2] الإرسال للذكاء الاصطناعي مع معالجة الأخطاء ---
             try:
-                # تعليمات النظام لبرق
-                sys_instruct = "أنت 'برق'. مطورك هو 'بارد (Barq)'. أنت خبير في العقيدة الشيعية. أجب باختصار وذكاء."
+                # تعليمات النظام الصارمة
+                sys_msg = "أنت 'برق'. مطورك الوحيد هو 'بارد (Barq)'. خبير عقيدة شيعية. أجب بذكاء."
                 
                 completion = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
-                    messages=[{"role": "system", "content": sys_instruct}] + 
+                    messages=[{"role": "system", "content": sys_msg}] + 
                              [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-3:]],
                     max_tokens=1024,
                 )
-                full_res = completion.choices[0].message.content
-                st.markdown(full_res)
-                st.session_state.messages.append({"role": "assistant", "content": full_res})
+                response = completion.choices[0].message.content
+                st.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
             
             except Exception as e:
-                # إذا حدث خطأ في رسالة معينة، نحذفها لكي لا يتوقف البرنامج
+                # حذف الرسالة التي سببت المشكلة فوراً لكي لا يعلق التطبيق
                 st.session_state.messages.pop()
-                st.error("⚠️ عذراً، هذه الرسالة مرفوضة تقنياً، جرب كتابتها بشكل آخر.")
-        
+                st.error("⚠️ عذراً، نظام الحماية الخارجي رفض هذه الجملة، جرب صياغتها بشكل آخر.")
+    
     st.rerun()
