@@ -9,52 +9,55 @@ st.title("⚡ مساعدك الذكي برق")
 API_KEY = "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"
 client = Groq(api_key=API_KEY)
 
-# 3. تهيئة الذاكرة
+# 3. الذاكرة
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# 4. عرض المحادثة السابقة
+# 4. عرض المحادثة
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 5. منطق الإرسال والرد
+# 5. منطق الإرسال
 if prompt := st.chat_input("تحدث مع برق..."):
-    # إضافة الرسالة للذاكرة مؤقتاً
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # فحص كلمة السر "حسن"
-        if prompt.strip() == "حسن":
+        # فحص كلمة السر "حسن" أولاً (خارج طلب الـ API لضمان الرد)
+        if "حسن" in prompt:
             response = "لا تكلم مع الانقسام الصغار"
             st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
-        else:
-            try:
-                # دستور برق
-                system_instruction = "أنت 'برق'. مطورك هو 'بارد (Barq)' تاج الرأس. 'barqVIB' للمطور. خبير في العقيدة الشيعية."
-                
-                # تجهيز الرسائل (نرسل آخر 5 رسائل فقط لتخفيف الضغط)
-                api_messages = [{"role": "system", "content": system_instruction}]
-                for m in st.session_state.messages[-5:]:
-                    api_messages.append({"role": m["role"], "content": m["content"]})
-                
-                # طلب الرد
-                completion = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
-                    messages=api_messages,
-                    max_tokens=1024,
-                    temperature=0.7
-                )
-                response = completion.choices[0].message.content
-                st.markdown(response)
-                # حفظ الرد بنجاح
-                st.session_state.messages.append({"role": "assistant", "content": response})
-                
-            except Exception as e:
-                # ----- هذا هو الحل السحري -----
-                # إذا حدث خطأ ورفضت الشركة النص، نقوم بحذف رسالتك الأخيرة من الذاكرة حتى لا يتلف التطبيق
-                st.session_state.messages.pop() 
-                st.error(f"عذراً يا بطل، نظام الحماية الخارجي رفض هذه الجملة تحديداً ولن يتم إرسالها. (السبب: {e})")
+            st.rerun()
+
+        try:
+            # دستور برق
+            system_msg = "أنت 'برق'. صانعك 'بارد (Barq)' تاج الرأس. 'barqVIB' للمطور. خبير عقيدة شيعية. أجب على كل شيء."
+            
+            # محاولة طلب الرد
+            completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{"role": "system", "content": system_msg}] + 
+                         [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-3:]],
+                max_tokens=1024,
+            )
+            
+            response = completion.choices[0].message.content
+            st.markdown(response)
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            st.rerun()
+
+        except Exception as e:
+            # هنا السر: سيكتب لك الخطأ بالتفصيل
+            error_msg = str(e)
+            if "content_filter" in error_msg.lower() or "moderation" in error_msg.lower():
+                st.error("🚫 السيرفر رفض الجملة: هذه الجملة محظورة من شركة الذكاء الاصطناعي (حماية محتوى).")
+            elif "rate_limit" in error_msg.lower():
+                st.error("⏳ ضغط كبير: السيرفر يطلب منك الانتظار دقيقة قبل الرسالة القادمة.")
+            else:
+                st.error(f"❌ خطأ تقني: {error_msg}")
+            
+            # حذف الرسالة التي سببت المشكلة لكي لا يعلق التطبيق
+            st.session_state.messages.pop()
