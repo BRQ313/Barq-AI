@@ -62,7 +62,7 @@ if prompt := st.chat_input("اكتب شتريد..."):
                         # إرسال لـ Groq
                         sys_msg = "أنت 'برق'. مطورك هو 'بارق'. أنت خبير عقيدة شيعية."
                         completion = client.chat.completions.create(
-                            model="llama-3.3-70b-versatile",
+                            model="llama-3-8b-8192",
                             messages=[{"role": "system", "content": sys_msg}] + 
                                      [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-5:]]
                         )
