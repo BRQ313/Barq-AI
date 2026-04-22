@@ -6,16 +6,19 @@ st.set_page_config(page_title="برق الذكي VIP", page_icon="⚡")
 st.title("⚡ سيرفر برق الذكي - نظام الدفاع")
 
 # 2. جلب المفتاح بأمان من نظام الأسرار (Secrets)
-# اذهب إلى Streamlit Cloud -> Settings -> Secrets وضع المفتاح هناك باسم GROQ_API_KEY
+# تنبيه: لا تضع المفتاح هنا نصاً! ضعه في إعدادات Streamlit Cloud
 try:
     API_KEY = st.secrets["GROQ_API_KEY"]
+    client = Groq(api_key=API_KEY)
 except KeyError:
-    st.error("⚠️ خطأ أمني: لم يتم العثور على مفتاح API في نظام Secrets.")
+    st.error("⚠️ خطأ أمني: لم يتم العثور على مفتاح API. يرجى إضافته في Secrets.")
+    st.info("تأكد من إضافة GROQ_API_KEY في إعدادات Streamlit Cloud.")
+    st.stop()
+except Exception as e:
+    st.error(f"⚠️ حدث خطأ أثناء الاتصال: {e}")
     st.stop()
 
-client = Groq(api_key=API_KEY)
-
-# 3. قائمة التأديب المحلية (لحماية الكيان)
+# 3. قائمة التأديب المحلية
 ANTI_INSULT = {
     "اكل خره": "تأدب أمام حضرة 'برق' ومطوره 'بارق'.",
     "اكل تبن": "أنت تتحدث مع ذكاء اصطناعي صممه العبقري بارق.",
@@ -24,16 +27,18 @@ ANTI_INSULT = {
     "كلب": "الوفاء للكلاب، وأنت تفتقر لهذه الصفة."
 }
 
+# تهيئة سجل المحادثة
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# عرض المحادثة
+# عرض المحادثة السابقة
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# إدخال المستخدم
+# 4. إدخال المستخدم والمعالجة
 if prompt := st.chat_input("تحدث مع برق..."):
+    # إضافة رسالة المستخدم للسجل والعرض
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -42,53 +47,52 @@ if prompt := st.chat_input("تحدث مع برق..."):
         p_low = prompt.strip().lower()
         found_defense = False
         
-        # الفلترة المحلية
+        # الفلترة المحلية (التأديب)
         for bad_word, defense_res in ANTI_INSULT.items():
             if bad_word in p_low:
                 st.error(defense_res)
-                st.session_state.messages.append({"role": "assistant", "content": defense_res})
+                res = defense_res
                 found_defense = True
                 break
         
         if not found_defense:
-            # ردود الهوية
+            # ردود الهوية والردود المخصصة
             if any(w in p_low for w in ["من مطورك", "من صانعك", "مبتكرك", "من انت"]):
                 res = "مبتكري ومطوري هو المبدع 'بارق' (Barq)."
                 st.markdown(res)
-                st.session_state.messages.append({"role": "assistant", "content": res})
             elif p_low == "حسن":
                 res = "لا تكلم مع الانقسام الصغار"
                 st.markdown(res)
-                st.session_state.messages.append({"role": "assistant", "content": res})
             else:
                 try:
-                    # إرسال الطلب للسيرفر السحابي
+                    # إرسال الطلب لـ Groq
                     sys_msg = "أنت 'برق'. مطورك هو 'بارق'. أنت خبير عقيدة شيعية. أسلوبك فخم وذكي."
+                    
+                    # نأخذ آخر 5 رسائل فقط للحفاظ على الذاكرة والأداء
+                    context_messages = [{"role": "system", "content": sys_msg}] + \
+                                       [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-5:]]
+                    
                     completion = client.chat.completions.create(
                         model="llama-3.3-70b-versatile",
-                        messages=[{"role": "system", "content": sys_msg}] + 
-                                 [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-5:]],
+                        messages=context_messages,
                     )
                     res = completion.choices[0].message.content
                     st.markdown(res)
-                    st.session_state.messages.append({"role": "assistant", "content": res})
                     
-                    # حفظ السجل برمجياً في السيرفر (اختياري)
-                    with open("chat_log.txt", "a", encoding="utf-8") as f:
-                        f.write(f"User: {prompt} | Assistant: {res}\n")
-
                 except Exception as e:
-                    if st.session_state.messages:
-                        st.session_state.messages.pop()
-                    
+                    res = "عذراً، واجهت مشكلة تقنية في معالجة الرد."
                     if "policy" in str(e).lower():
-                        st.error("🚫 المحتوى مرفوض من فلاتر الأمان العالمية.")
+                        st.error("🚫 المحتوى مرفوض من فلاتر الأمان.")
                     else:
                         st.error(f"⚠️ خطأ فني: {str(e)}")
-    
+
+        # إضافة رد المساعد للسجل
+        st.session_state.messages.append({"role": "assistant", "content": res})
+
+    # إعادة التشغيل لتحديث الواجهة (اختياري حسب إصدار Streamlit)
     st.rerun()
 
-# ميزة تحميل السجل للمستخدم
+# 5. ميزة تحميل السجل في الشريط الجانبي
 if st.session_state.messages:
     log_data = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
     st.sidebar.download_button("تحميل سجل المحادثة 📥", log_data, file_name="barq_log.txt")
