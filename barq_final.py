@@ -71,7 +71,6 @@ if prompt := st.chat_input("تحدث مع برق..."):
                     # نأخذ آخر 5 رسائل فقط للحفاظ على الذاكرة والأداء
                     context_messages = [{"role": "system", "content": sys_msg}] + \
                                        [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-5:]]
-                    
                     completion = client.chat.completions.create(
                         model="llama-3.3-70b-versatile",
                         messages=context_messages,
