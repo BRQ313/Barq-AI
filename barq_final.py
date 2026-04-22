@@ -1,4 +1,5 @@
 import streamlit as st
+st.cache_data.clear()
 from groq import Groq
 
 # 1. إعدادات المتصفح
