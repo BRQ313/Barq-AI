@@ -73,5 +73,5 @@ if prompt := st.chat_input("اكتب شتريد او ولي من يمي"):
                     res = f"⚠️ خطأ فني: {str(e)}"
                     st.error(res)
 
-        # حفظ رد المساعد في السجل
+       # حفظ رد المساعد في السجل
         st.session_state.messages.append({"role": "assistant", "content": res})
