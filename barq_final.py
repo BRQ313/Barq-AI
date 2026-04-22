@@ -1,16 +1,19 @@
 import streamlit as st
 from groq import Groq
 
-# 1. إعداد الصفحة
+# 1. إعدادات الصفحة - يجب أن تكون في البداية تماماً
 st.set_page_config(page_title="برق الذكي VIP", page_icon="⚡")
-st.title("⚡ الذكاء الاصطناعي برق")
 
-# 2. جلب المفتاح
+# 2. جلب المفتاح والأدوات
 if "GROQ_API_KEY" in st.secrets:
     client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 else:
-    st.error("⚠️ المفتاح غير موجود في Secrets")
+    st.error("⚠️ المفتاح غير موجود في الأسرار (Secrets)")
     st.stop()
+
+# 3. تهيئة الذاكرة
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
 # قائمة الدفاع
 ANTI_INSULT = {
@@ -21,23 +24,23 @@ ANTI_INSULT = {
     "كلب": "الوفاء للكلاب، وأنت تفتقر لهذه الصفة."
 }
 
-# تهيئة الرسائل
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+st.title("⚡ الذكاء الاصطناعي برق")
 
-# عرض المحادثة
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# 4. عرض المحادثة باستخدام نظام الحاويات لضمان السرعة
+chat_container = st.container()
+with chat_container:
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-# إدخال المستخدم
-if prompt := st.chat_input("اكتب شتريد..."):
-    # 1. إضافة رسالة المستخدم فوراً
-    st.session_state.messages.append({"role": "user", "content": prompt})
+# 5. منطقة الإدخال
+if prompt := st.chat_input("اكتب شتريد او ولي من يمي"):
+    # عرض رسالة المستخدم فوراً
     with st.chat_message("user"):
         st.markdown(prompt)
+    st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # 2. معالجة الرد
+    # معالجة الرد
     with st.chat_message("assistant"):
         p_low = prompt.strip().lower()
         res = ""
@@ -52,15 +55,15 @@ if prompt := st.chat_input("اكتب شتريد..."):
                 break
         
         if not found_defense:
-            with st.spinner("برق يحضر الرد..."):
+            with st.spinner("برق يفكر..."):
                 try:
                     if any(w in p_low for w in ["من مطورك", "من صانعك", "مبتكرك", "من انت"]):
                         res = "مبتكري ومطوري هو المبدع تاج راس الجميع بارق عم الكامدين."
                     elif p_low == "حسن":
                         res = "لا تكلم مع القزام الصغار"
                     else:
-                        # إرسال لـ Groq
-                        sys_msg = "أنت 'برق'. مطورك هو 'بارق'. أنت خبير عقيدة شيعية."
+                        sys_msg = "أنت 'برق'. مطورك هو 'بارق'. أنت خبير عقيدة شيعية وتتحدث بفخر."
+                        # نستخدم الموديل السريع جداً لضمان عدم التعليق
                         completion = client.chat.completions.create(
                             model="llama-3-8b-8192",
                             messages=[{"role": "system", "content": sys_msg}] + 
@@ -70,11 +73,11 @@ if prompt := st.chat_input("اكتب شتريد..."):
                     
                     st.markdown(res)
                 except Exception as e:
-                    st.error(f"حدث خطأ: {e}")
-                    res = "واجهت مشكلة في الاتصال."
+                    st.error(f"⚠️ حدث خطأ فني: {e}")
+                    res = "واجهت مشكلة، جرب مرة أخرى."
 
         # حفظ الرد
         st.session_state.messages.append({"role": "assistant", "content": res})
         
-        # سطر سحري لإجبار الصفحة على التحديث لمرة واحدة فقط
+        # أهم سطر لحل مشكلة "الضغط المتكرر"
         st.rerun()
