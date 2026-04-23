@@ -4,10 +4,8 @@ from groq import Groq
 # 1. إعدادات المتصفح
 st.set_page_config(page_title="برق الذكي VIP", page_icon="⚡")
 
-# 2. إعداد العميل (تأكد من استخدام مفتاحك الخاص)
-MY_API_KEY = "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"
-client = Groq(api_key=MY_API_KEY)
-
+# 2. بدلاً من كتابة المفتاح يدوياً
+MY_API_KEY = st.secrets["GROQ_API_KEY"]
 # 3. إدارة الذاكرة وحالة المطور
 if "messages" not in st.session_state:
     st.session_state.messages = []
