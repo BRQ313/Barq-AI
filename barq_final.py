@@ -1,12 +1,11 @@
 import streamlit as st
 from groq import Groq
 
-# إعداد بسيط جداً
-st.title("⚡ برق")
+st.set_page_config(page_title="برق الذكي", page_icon="⚡")
 
-# التأكد من المفتاح
+# جلب المفتاح من الخزنة
 if "GROQ_API_KEY" not in st.secrets:
-    st.error("أضف المفتاح في Secrets أولاً!")
+    st.error("المفتاح مفقود من Secrets")
     st.stop()
 
 client = Groq(api_key=st.secrets["GROQ_API_KEY"])
@@ -14,29 +13,28 @@ client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+st.title("⚡ ذكاء برق")
+
 # عرض المحادثة
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
-        st.write(m["content"])
+        st.markdown(m["content"])
 
-# منطقة الإرسال
-prompt = st.chat_input("اكتب شيئاً...")
-
-if prompt:
-    # 1. إظهار رسالة المستخدم
+# الإرسال
+if prompt := st.chat_input("اكتب شيئاً..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.write(prompt)
+        st.markdown(prompt)
 
-    # 2. جلب رد البوت
     with st.chat_message("assistant"):
         try:
+            # استخدمنا موديل llama-3.3 لأنه البديل الحالي المتاح
             response = client.chat.completions.create(
-                model="llama3-8b-8192",
+                model="llama-3.3-70b-versatile", 
                 messages=[{"role": "user", "content": prompt}]
             )
-            answer = response.choices[0].message.content
-            st.write(answer)
-            st.session_state.messages.append({"role": "assistant", "content": answer})
+            res = response.choices[0].message.content
+            st.markdown(res)
+            st.session_state.messages.append({"role": "assistant", "content": res})
         except Exception as e:
-            st.error(f"عذراً، حدث خطأ: {e}")
+            st.error(f"حدث خطأ تقني: {e}")
