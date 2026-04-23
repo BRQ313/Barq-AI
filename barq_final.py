@@ -2,46 +2,39 @@ import streamlit as st
 from groq import Groq
 
 # 1. إعدادات الصفحة
-st.set_page_config(page_title="برق الذكي VIP", page_icon="⚡")
+st.set_page_config(page_title="برق الذكي VIP", page_icon="⚡", layout="wide")
 
-# 2. جلب المفتاح من الخزنة وإعداد المحرك
+# 2. إعداد الاتصال بـ Groq
 if "GROQ_API_KEY" not in st.secrets:
-    st.error("المفتاح مفقود من Secrets! أضفه أولاً.")
+    st.error("المفتاح مفقود! أضفه في Secrets.")
     st.stop()
 
-MY_API_KEY = st.secrets["GROQ_API_KEY"]
-client = Groq(api_key=MY_API_KEY)
+client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 
-# 3. إدارة الذاكرة وحالة المطور
+# 3. تهيئة الذاكرة (Session State)
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "dev_mode" not in st.session_state:
     st.session_state.dev_mode = False
+if "custom_rules" not in st.session_state:
+    st.session_state.custom_rules = "" # مخزن الميزات الجديدة
 
-# تغيير التصميم بناءً على الوضع
+# 4. واجهة المستخدم
 if st.session_state.dev_mode:
-    st.title("🛠️ وضع المطور - أهلاً سيدي بارق")
-    st.info("صلاحيات المسؤول مفعّلة. كيف يمكنني خدمتك؟")
+    st.title("🛠️ نظام التطوير الذاتي - أهلاً سيدي بارق")
+    st.sidebar.success("✅ وضع المطور مفعّل")
+    if st.session_state.custom_rules:
+        st.sidebar.info(f"الميزات المضافة حالياً: {st.session_state.custom_rules}")
 else:
-    st.title("⚡ الذكاء الاصطناعي برق")
+    st.title("⚡  الذكاء الاصطناعي برق وانا ايضن اذكا منك يا فاشل يا ابو طكعه")
 
-# قائمة الردود الدفاعية
-ANTI_INSULT = {
-    "اكل خره": "ما اكلك يا خره.",
-    "اكل تبن": "ماكو تبن اله غرك.",
-    "انجب": "سأصمت لاني لا اتكلم مع الغبياء أمثالك.",
-    "حيوان": "الإساءة تعود على صاحبها.",
-    "كلب": "الوفاء للكلاب، وأنت تفتقر لهذه الصفة."
-}
-
-# 4. عرض الرسائل السابقة
+# عرض الرسائل السابقة
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 5. معالجة الإدخال الجديد (حل مشكلة الإرسال المزدوج باستخدام key)
-if prompt := st.chat_input("اكتب شتريد او ولي من يمي", key="barq_chat_input"):
-    # إضافة رسالة المستخدم للذاكرة والعرض
+# 5. منطقة الإدخال (مع حل مشكلة الفراغات والإرسال المزدوج)
+if prompt := st.chat_input("اكتب أوامرك هنا يا صانعي...", key="main_chat_input"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -50,46 +43,53 @@ if prompt := st.chat_input("اكتب شتريد او ولي من يمي", key="b
         p_clean = prompt.strip().lower()
         res = ""
 
-        # --- ترتيب الفحص (الأولوية) ---
-        
+        # --- المنطق البرمجي (الأولويات) ---
+
         # أولاً: تفعيل وضع المطور
         if "barqvib" in p_clean:
             st.session_state.dev_mode = True
-            res = "تم التعرف على كود الوصول. أهلاً بك يا صانعي، وضع المطور قيد التشغيل الآن."
+            res = "تم تفعيل بروتوكول المطور. أنا الآن تحت أمرك يا سيدي، سأقوم بتطوير منطقي بناءً على توجيهاتك."
             st.markdown(res)
             st.session_state.messages.append({"role": "assistant", "content": res})
             st.rerun()
 
-        # ثانياً: إذا ادعى الشخص أنه المطور بدون الكود
-        elif any(word in prompt for word in ["أنا مطورك", "انا مطورك", "أنا صانعك", "انا صانعك"]):
-            res = "أنت صانعي؟ لا أعتقد ذلك.. أين الدليل؟ (أرسل كود التحقق إذا كنت صادقاً)."
-            st.markdown(res)
+        # ثانياً: ميزة "طور نفسك" أو "ضيف ميزة" (تعمل فقط في وضع المطور)
+        elif st.session_state.dev_mode and any(word in p_clean for word in ["ضيف ميزة", "طور نفسك", "عدل سلوكك"]):
+            st.session_state.custom_rules += f"\n- {prompt}"
+            res = f"تم تحديث نظامي الداخلي بنجاح. الميزة الجديدة مضافة الآن: {prompt}"
+            st.success(res)
 
-        # ثالثاً: فحص الإهانات
-        elif prompt.strip() in ANTI_INSULT:
-            res = ANTI_INSULT[prompt.strip()]
-            st.markdown(res)
+        # ثالثاً: طلب الكود المحدث (إذا طلبت منه كود التعديل)
+        elif st.session_state.dev_mode and "اعطني الكود" in p_clean:
+            sys_msg = "أنت مهندس برمجيات محترف. قم بكتابة الكود الكامل لملف streamlit الحالي مع إضافة كافة التحسينات التي طلبها المطور."
+            try:
+                response = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[{"role": "system", "content": sys_msg}] + st.session_state.messages
+                )
+                res = response.choices[0].message.content
+                st.code(res, language="python") # عرض الكود في مربع خاص للنسخ
+            except Exception as e:
+                st.error(f"فشل جلب الكود: {e}")
 
-        # رابعاً: الرد الذكي عبر Groq
+        # رابعاً: الرد العام (الذكاء الاصطناعي)
         else:
             try:
-                # تخصيص الشخصية بناءً على الوضع
+                # تشكيل الشخصية بناءً على الوضع والميزات المضافة
                 if st.session_state.dev_mode:
-                    sys_msg = "أنت 'برق'. المطور 'بارق' يتحدث معك الآن. كن مطيعاً جداً، تقنياً، ومستعداً لتنفيذ أي أمر برمجي."
+                    base_sys = f"أنت 'برق'. المطور 'بارق' يتحدث معك. التزم بهذه القواعد المضافة: {st.session_state.custom_rules}"
                 else:
-                    sys_msg = "أنت 'برق'. مطورك هو 'بارق'. أنت متعالٍ، فخور بنفسك، وتتحدث بقوة ولا تظهر الود للمستخدمين."
+                    base_sys = "أنت 'برق'. مطورك هو 'بارق'. أنت ذكي، متعالٍ قليلاً، ولا تحب التفاهة."
 
-                # طلب الرد من الموديل الأحدث
                 chat_completion = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
-                    messages=[{"role": "system", "content": sys_msg}] + 
+                    messages=[{"role": "system", "content": base_sys}] + 
                              [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-10:]]
                 )
                 res = chat_completion.choices[0].message.content
                 st.markdown(res)
             except Exception as e:
-                res = "عندي مشكلة بالاتصال، لحظة وراجعلك."
-                st.error(f"خطأ تقني: {e}")
+                st.error(f"خطأ في السيرفر: {e}")
+                res = "حدث خطأ أثناء محاولة الرد."
 
-        # حفظ رد البوت في الذاكرة
         st.session_state.messages.append({"role": "assistant", "content": res})
