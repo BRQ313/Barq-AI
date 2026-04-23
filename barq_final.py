@@ -11,6 +11,9 @@ if "GROQ_API_KEY" not in st.secrets:
 
 client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 
+# حساب المبتكر (المطور الأساسي)
+CREATOR_ACCOUNT = "BRQ313"
+
 # 3. تهيئة الذاكرة (Session State)
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -19,10 +22,19 @@ if "dev_mode" not in st.session_state:
 if "custom_rules" not in st.session_state:
     st.session_state.custom_rules = "" # مخزن الميزات الجديدة
 
-# 4. واجهة المستخدم
+# 4. التحقق التلقائي: تفعيل وضع المطور للمبتكر
+try:
+    current_user = st.session_state.get("user_info", {}).get("username", "")
+    # إذا كان المستخدم هو المبتكر، فعّل وضع المطور تلقائياً
+    if current_user == CREATOR_ACCOUNT or st.secrets.get("STREAMLIT_USER") == CREATOR_ACCOUNT:
+        st.session_state.dev_mode = True
+except:
+    pass
+
+# 5. واجهة المستخدم
 if st.session_state.dev_mode:
     st.title("🛠️ نظام التطوير الذاتي - أهلاً سيدي بارق")
-    st.sidebar.success("✅ وضع المطور مفعّل")
+    st.sidebar.success("✅ وضع المطور مفعّل تلقائياً")
     if st.session_state.custom_rules:
         st.sidebar.info(f"الميزات المضافة حالياً: {st.session_state.custom_rules}")
 else:
@@ -33,7 +45,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 5. منطقة الإدخال (مع حل مشكلة الفراغات والإرسال المزدوج)
+# 6. منطقة الإدخال (مع حل مشكلة الفراغات والإرسال المزدوج)
 if prompt := st.chat_input("اكتب شتريد اولي من يمي", key="main_chat_input"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -45,7 +57,7 @@ if prompt := st.chat_input("اكتب شتريد اولي من يمي", key="main
 
         # --- المنطق البرمجي (الأولويات) ---
 
-        # أولاً: تفعيل وضع المطور
+        # أولاً: تفعيل وضع المطور (كلمة السر)
         if "barqvib" in p_clean:
             st.session_state.dev_mode = True
             res = "تم تفعيل بروتوكول المطور. أنا الآن تحت أمرك يا سيدي، سأقوم بتطوير منطقي بناءً على توجيهاتك."
