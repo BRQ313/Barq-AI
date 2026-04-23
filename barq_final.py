@@ -34,7 +34,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # 5. منطقة الإدخال (مع حل مشكلة الفراغات والإرسال المزدوج)
-if prompt := st.chat_input("اكتب أوامرك هنا يا صانعي...", key="main_chat_input"):
+if prompt := st.chat_input("اكتب شتريد اولي من يمي", key="main_chat_input"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
