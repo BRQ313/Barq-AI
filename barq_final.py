@@ -60,7 +60,7 @@ if prompt := st.chat_input("اكتب شتريد اولي من يمي", key="main
         # أولاً: تفعيل وضع المطور (كلمة السر)
         if "barqvib" in p_clean:
             st.session_state.dev_mode = True
-            res = "تم تفعيل بروتوكول المطور. أنا الآن تحت أمرك يا سيدي، سأقوم بتطوير منطقي بناءً على توجيهاتك."
+            res = "تم تفعيل وضع المطور. أنا الآن تحت أمرك يا سيدي، سأقوم بتطوير منطقي بناءً على توجيهاتك."
             st.markdown(res)
             st.session_state.messages.append({"role": "assistant", "content": res})
             st.rerun()
