@@ -39,7 +39,6 @@ with chat_placeholder:
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-
 # 5. معالجة الإدخال الجديد (هنا التعديل الجوهري)
 if prompt := st.chat_input("اكتب شتريد او ولي من يمي"):
     st.session_state.messages.append({"role": "user", "content": prompt})
