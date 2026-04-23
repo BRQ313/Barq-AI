@@ -4,12 +4,7 @@ from groq import Groq
 st.set_page_config(page_title="برق الذكي", page_icon="⚡")
 
 # جلب المفتاح من الخزنة
-if "GROQ_API_KEY" not in st.secrets:
-    st.error("المفتاح مفقود من Secrets")
-    st.stop()
-
 client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
