@@ -4,14 +4,10 @@ from groq import Groq
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="برق الذكي VIP", page_icon="⚡")
 
-# 2. تعريف العميل (Client) بشكل صحيح ومبكر
-# سنحاول جلب المفتاح، وإذا لم نجد مفتاحاً سنستخدم نصاً فارغاً لتجنب انهيار الكود
+# 2. جلب المفتاح بأمان (تأكد من وضعه في Secrets بموقع Streamlit)
 MY_API_KEY = st.secrets.get("GROQ_API_KEY", "")
-
-if not MY_API_KEY:
-    st.error("⚠️ خطأ: مفتاح GROQ_API_KEY غير موجود في إعدادات Secrets!")
-    client = None
-else:
+client = None
+if MY_API_KEY:
     client = Groq(api_key=MY_API_KEY)
 
 # 3. إدارة الذاكرة وحالة المطور
@@ -20,14 +16,14 @@ if "messages" not in st.session_state:
 if "dev_mode" not in st.session_state:
     st.session_state.dev_mode = False
 
-# واجهة المستخدم بناءً على الوضع
+# تغيير الواجهة بناءً على الوضع
 if st.session_state.dev_mode:
     st.title("🛠️ وضع المطور - أهلاً سيدي بارق")
-    st.success("صلاحيات المسؤول مفعّلة. أنا رهن إشارتك.")
+    st.success("صلاحيات المسؤول مفعّلة. أنا الآن مهندس البرمجيات الخاص بك.")
 else:
     st.title("⚡ الذكاء الاصطناعي برق وأنا أذكى منك يا فاشل")
 
-# قائمة الردود الثابتة
+# قائمة الردود الدفاعية
 ANTI_INSULT = {
     "اكل خره": "ما اكلك يا خره.",
     "اكل تبن": "ماكو تبن اله غرك.",
@@ -36,12 +32,12 @@ ANTI_INSULT = {
     "كلب": "الوفاء للكلاب، وأنت تفتقر لهذه الصفة."
 }
 
-# 4. عرض الرسائل
+# 4. عرض الرسائل السابقة (هذا الجزء الذي سألت عنه، يبقى كما هو)
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 5. معالجة الإدخال
+# 5. معالجة الإدخال الجديد (هنا التعديل الجوهري)
 if prompt := st.chat_input("اكتب شتريد او ولي من يمي"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -50,36 +46,36 @@ if prompt := st.chat_input("اكتب شتريد او ولي من يمي"):
     with st.chat_message("assistant"):
         p_clean = prompt.strip()
         p_lower = p_clean.lower()
-        res = ""
-
-        # أولاً: تفعيل وضع المطور
+        
+        # أ - التحقق من كود المطور
         if "barqvib" in p_lower:
             st.session_state.dev_mode = True
-            res = "تم تفعيل وضع المطور بنجاح. أهلاً بك يا صانعي."
+            res = "تم تفعيل وضع المطور. أنا جاهز لكتابة الأكواد وتنفيذ الأوامر التقنية يا سيدي."
             st.markdown(res)
             st.rerun()
 
-        # ثانياً: تحدي المطور
+        # ب - التحقق من ادعاء المطور
         elif any(word in p_clean for word in ["أنا مطورك", "انا مطورك", "أنا صانعك", "انا صانعك"]):
-            res = "أنت صانعي؟ أين الدليل؟ لا أصدق الكلام الفارغ، أثبت ذلك برمز الدخول."
+            res = "أنت صانعي؟ أين الدليل؟ لا أصدق الكلام، أثبت ذلك برمز الدخول (barqVIB)."
             st.markdown(res)
 
-        # ثالثاً: فحص الإهانات
+        # ج - فحص الإهانات
         elif p_clean in ANTI_INSULT:
             res = ANTI_INSULT[p_clean]
             st.markdown(res)
 
-        # رابعاً: الرد الذكي (هنا قمنا بإضافة فحص لـ client)
+        # د - الرد الذكي (هنا يتم التحكم في القدرة البرمجية)
         else:
             if client is None:
-                res = "عذراً، لا يمكنني الرد لأن مفتاح الـ API غير مضبوط بشكل صحيح."
+                res = "عذراً، المفتاح غير مضبوط في Secrets."
                 st.error(res)
             else:
                 try:
+                    # تخصيص التعليمات لبرق بناءً على الوضع
                     if st.session_state.dev_mode:
-                        sys_msg = "أنت 'برق'. المطور 'بارق' يتحدث معك الآن. كن مطيعاً جداً."
+                        sys_msg = "أنت 'برق'. المطور 'بارق' يخاطبك. أنت خبير برمجيات وفلسفة. عندما يُطلب منك كود، اكتبه بتنسيق Markdown احترافي."
                     else:
-                        sys_msg = "أنت 'برق'. مطورك هو 'بارق'. أنت متعالٍ ولا تحب الأغبياء."
+                        sys_msg = "أنت 'برق'. مطورك هو 'بارق'. أنت ذكاء اصطناعي مغرور وحاد الردود."
 
                     chat_completion = client.chat.completions.create(
                         model="llama-3.1-8b-instant",
@@ -87,9 +83,9 @@ if prompt := st.chat_input("اكتب شتريد او ولي من يمي"):
                                  [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[-5:]]
                     )
                     res = chat_completion.choices[0].message.content
-                    st.markdown(res)
+                    st.markdown(res) # هذا السطر هو الذي سيظهر الكود البرمجي بشكل صحيح
                 except Exception as e:
-                    res = "عندي مشكلة بالاتصال أو المفتاح، لحظة وراجعلك."
-                    st.error(f"خطأ تقني: {e}")
+                    res = "حدث خطأ في الاتصال."
+                    st.error(f"Error: {e}")
 
     st.session_state.messages.append({"role": "assistant", "content": res})
