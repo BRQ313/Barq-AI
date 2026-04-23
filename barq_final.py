@@ -6,6 +6,7 @@ st.set_page_config(page_title="برق الذكي VIP", page_icon="⚡")
 
 # 2. بدلاً من كتابة المفتاح يدوياً
 MY_API_KEY = st.secrets["GROQ_API_KEY"]
+client = Groq(api_key=MY_API_KEY) # هذا هو السطر الناقص الذي يسبب الخطأ
 # 3. إدارة الذاكرة وحالة المطور
 if "messages" not in st.session_state:
     st.session_state.messages = []
