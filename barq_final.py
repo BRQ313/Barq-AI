@@ -32,10 +32,13 @@ ANTI_INSULT = {
     "كلب": "الوفاء للكلاب، وأنت تفتقر لهذه الصفة."
 }
 
-# 4. عرض الرسائل السابقة (هذا الجزء الذي سألت عنه، يبقى كما هو)
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# 4. عرض الرسائل السابقة داخل حاوية تسمح بالتمرير
+chat_placeholder = st.container()
+
+with chat_placeholder:
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
 # 5. معالجة الإدخال الجديد (هنا التعديل الجوهري)
 if prompt := st.chat_input("اكتب شتريد او ولي من يمي"):
