@@ -35,7 +35,7 @@ if st.session_state.dev_mode:
     st.title("🛠️ نظام التطوير الذاتي - أهلاً سيدي بارق")
     st.sidebar.success("✅ وضع المطور مفعّل")
 else:
-    st.title("⚡ ذكاء برق الاصطناعي")
+    st.title("⚡ انا الذكا الصطناعي برق ونا ايضن اذكا منك يا فاشل يا ابو طكعه")
 
 # عرض الرسائل السابقة
 for message in st.session_state.messages:
@@ -68,12 +68,12 @@ def process_audio_with_groq(audio_bytes):
 # 6. منطقة الإدخال
 col1, col2, col3 = st.columns([0.7, 0.15, 0.15])
 with col1:
-    prompt = st.chat_input("تكلم مع برق...", key="main_chat_input")
+    prompt = st.chat_input("اكتب شتريد اولي من يمي", key="main_chat_input")
 with col2:
-    if st.button("📸 صورة", use_container_width=True):
+    if st.button("📸 ارسال صورة", use_container_width=True):
         st.session_state.show_image_uploader = True
 with col3:
-    if st.button("🎤 صوت", use_container_width=True):
+    if st.button("🎤 اضغط لتسجيل صوتك ولو صوتك لعبان نفس", use_container_width=True):
         st.session_state.show_audio_recorder = True
 
 # معالجة أدوات الرفع
