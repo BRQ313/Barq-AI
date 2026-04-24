@@ -66,6 +66,10 @@ def encode_image_to_base64(uploaded_file):
 def process_audio_with_groq(audio_bytes):
     """إرسال الصوت إلى Groq للتعرف على الكلام"""
     try:
+        # إذا كان input هو UploadedFile من Streamlit، نقرأ البايتات منه
+        if hasattr(audio_bytes, 'read'):
+            audio_bytes = audio_bytes.read()
+        
         # إنشء ملف مؤقت للصوت
         audio_file = io.BytesIO(audio_bytes)
         
