@@ -29,17 +29,10 @@ if "uploaded_images" not in st.session_state:
     st.session_state.uploaded_images = []
 if "audio_data" not in st.session_state:
     st.session_state.audio_data = None
-
-# 4. التحقق التلقائي: تفعيل وضع المطور للمبتكر
-try:
-    current_user = st.session_state.get("user_info", {}).get("username", "")
-    # إذا كان المستخدم هو المبتكر، فعّل وضع المطور تلقائياً
-    if current_user == CREATOR_ACCOUNT or st.secrets.get("STREAMLIT_USER") == CREATOR_ACCOUNT:
-        st.session_state.dev_mode = True
 except:
     pass
 
-# 5. واجهة المستخدم
+# 4. واجهة المستخدم
 if st.session_state.dev_mode:
     st.title("🛠️ نظام التطوير الذاتي - أهلاً سيدي بارق")
     st.sidebar.success("✅ وضع المطور مفعّل تلقائياً")
@@ -57,12 +50,12 @@ for message in st.session_state.messages:
             st.audio(message["audio_data"], format="audio/wav")
         st.markdown(message["content"])
 
-# 6. دالة معالجة الصور
+# 5. دالة معالجة الصور
 def encode_image_to_base64(uploaded_file):
     """تحويل الصورة إلى Base64"""
     return base64.b64encode(uploaded_file.read()).decode("utf-8")
 
-# 7. دالة معالجة الصوت
+# 6. دالة معالجة الصوت
 def process_audio_with_groq(audio_bytes):
     """إرسال الصوت إلى Groq للتعرف على الكلام"""
     try:
@@ -84,7 +77,7 @@ def process_audio_with_groq(audio_bytes):
         st.error(f"خطأ في معالجة الصوت: {e}")
         return None
 
-# 8. منطقة الإدخال المحسّنة مع الأزرار
+# 7. منطقة الإدخال المحسّنة مع الأزرار
 col1, col2, col3 = st.columns([0.7, 0.15, 0.15])
 
 with col1:
@@ -98,7 +91,7 @@ with col3:
     if st.button("🎤 صوت", use_container_width=True):
         st.session_state.show_audio_recorder = True
 
-# 9. عرض أداة تحميل الصور
+# 8. عرض أداة تحميل الصور
 if st.session_state.get("show_image_uploader", False):
     st.write("**📸 اختر صورة:**")
     uploaded_files = st.file_uploader("تحميل صورة", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=True)
@@ -112,7 +105,7 @@ if st.session_state.get("show_image_uploader", False):
             st.session_state.show_image_uploader = False
             st.rerun()
 
-# 10. عرض مسجل الصوت (بديل مشروط - يعتمد على المتصفح)
+# 9. عرض مسجل الصوت (بديل مشروط - يعتمد على المتصفح)
 if st.session_state.get("show_audio_recorder", False):
     st.write("**🎤 تسجيل صوتي:**")
     
@@ -131,7 +124,7 @@ if st.session_state.get("show_audio_recorder", False):
         st.session_state.show_audio_recorder = False
         st.rerun()
 
-# 11. معالجة الرسائل النصية والوسائط
+# 10. معالجة الرسائل النصية والوسائط
 if prompt or st.session_state.uploaded_images or st.session_state.audio_data:
     
     # معالجة الصور
