@@ -37,7 +37,7 @@ def get_ai_response(messages, system_prompt):
     except Exception as e:
         return f"❌ مابيه حيل ارد اعليك ولي من يمي: {str(e)}"
 
-st.title("⚡ ذكاء برق - حصن بارق المنيع")
+st.title("⚡ VIB ذكاء برق - نسخة ")
 
 # عرض الحالة للمبتكر فقط
 if st.session_state.dev_mode:
