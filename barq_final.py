@@ -13,15 +13,19 @@ if not GROQ_API_KEY:
 
 client = Groq(api_key=GROQ_API_KEY)
 
-# 3. تهيئة الذاكرة المتطورة
+# 3. تهيئة الذاكرة المحمية
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "dev_mode" not in st.session_state:
     st.session_state.dev_mode = False
 if "custom_features" not in st.session_state:
-    st.session_state.custom_features = [] # هنا تخزن الميزات اللي تضيفها
+    st.session_state.custom_features = []
 
-# --- دالة جلب الرد ---
+# --- طبقة الحماية القصوى ---
+# النص الذي بالأسفل هو "بصمة المبتكر"
+# لن يتفعل التطبيق كوضع مطور إلا إذا طابق المدخل هذه البصمة بالضبط
+CREATOR_SIGNATURE = "barqVIB" 
+
 def get_ai_response(messages, system_prompt):
     try:
         chat_completion = client.chat.completions.create(
@@ -33,57 +37,57 @@ def get_ai_response(messages, system_prompt):
     except Exception as e:
         return f"❌ مابيه حيل ارد اعليك ولي من يمي: {str(e)}"
 
-# --- الواجهة ---
-st.title("⚡ ذكاء برق - نظام التطوير الذاتي")
+st.title("⚡ ذكاء برق - حصن بارق المنيع")
 
-# عرض الحالة في الجانب
+# عرض الحالة للمبتكر فقط
 if st.session_state.dev_mode:
-    st.sidebar.success("🛠️ وضع المطور (barqVIB) مفعّل")
-    if st.session_state.custom_features:
-        st.sidebar.info("الميزات المضافة:\n" + "\n".join(st.session_state.custom_features))
+    st.sidebar.markdown("### 🛠️ وضع المبتكر مفعّل")
+    st.sidebar.info("لا يمكن لأحد غيرك تعديل المنطق الآن.")
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# --- منطقة الإدخال والمعالجة ---
 if prompt := st.chat_input("اكتب شتريد او ولي من يمي"):
     
-    # 1. تفعيل وضع المطور
-    if "barqVIB" in prompt:
+    # حماية وضع المطور: لن يخبر أحداً أنه تفعّل إلا إذا كانت البصمة صحيحة
+    if prompt.strip() == CREATOR_SIGNATURE:
         st.session_state.dev_mode = True
-        st.success("تم تفعيل وضع المطور. تفضل سيدي بارق، ماذا نطور اليوم؟")
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.success("تم تفعيل بروتوكول المبتكر. الأوامر البرمجية متاحة لك الآن.")
         st.rerun()
 
-    # 2. إضافة ميزة (فقط إذا كان وضع المطور مفعلاً)
-    if st.session_state.dev_mode and "ضيف ميزة" in prompt:
-        new_feature = prompt.replace("ضيف ميزة", "").strip()
-        st.session_state.custom_features.append(new_feature)
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("assistant"):
-            res = f"✅ علم سيدي! تم إضافة الميزة: ({new_feature}) إلى نظامي بنجاح."
-            st.markdown(res)
-            st.session_state.messages.append({"role": "assistant", "content": res})
-        st.rerun()
+    # محاولة إضافة ميزة من شخص غريب
+    if "ضيف ميزة" in prompt:
+        if not st.session_state.dev_mode:
+            # رد قاسي للغرباء الذين يحاولون التطوير
+            with st.chat_message("assistant"):
+                res = "##### ققتحلم اطورني! أنت لست بارق، ولا تملك صلاحية الوصول إلى شفرتي البرمجية.  ولي من يمي احسلك لا اعنعل !"
+                st.error(res)
+                st.session_state.messages.append({"role": "user", "content": prompt})
+                st.session_state.messages.append({"role": "assistant", "content": res})
+                st.stop()
+        else:
+            # تنفيذ الأمر للمبتكر فقط
+            new_feature = prompt.replace("ضيف ميزة", "").strip()
+            st.session_state.custom_features.append(new_feature)
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("assistant"):
+                st.success(f"✅ أبشر سيدي بارق، تم دمج الميزة الجديدة: ({new_feature})")
+            st.rerun()
 
-    # 3. الرد العادي مع دمج الميزات المضافة
+    # الرد العادي
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("######جاي ارد اعليك دير بالك تكتب ازياده لا انعل "):
-            
-            # بناء الـ System Prompt بناءً على الميزات المضافة
-            base_sys = "أنت 'برق'. مطورك هو 'بارق'."
+        with st.spinner("برق يراجع صلاحيات المستخدم..."):
+            base_sys = "أنت 'برق'. مطورك هو 'بارق'. أنت متعالٍ جداً مع الغرباء."
             if st.session_state.dev_mode:
-                base_sys += " أنت الآن في وضع المطور وتتحدث مع مبتكرك."
+                base_sys = "أنت الآن مع خالقك 'بارق'. نفذ أوامره بدقة وذكاء."
             
-            # دمج الميزات الجديدة في "عقل" الذكاء الاصطناعي
             if st.session_state.custom_features:
-                features_str = " .التزم بالميزات الإضافية التالية التي وضعها لك المطور: " + " و ".join(st.session_state.custom_features)
-                base_sys += features_str
+                base_sys += " .التزم بالميزات التي أضافها مطورك: " + " و ".join(st.session_state.custom_features)
 
             response = get_ai_response(st.session_state.messages, base_sys)
             st.markdown(response)
