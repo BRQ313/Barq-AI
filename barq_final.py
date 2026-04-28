@@ -32,10 +32,10 @@ def get_ai_response(messages, system_prompt):
         )
         return chat_completion.choices[0].message.content
     except Exception as e:
-        return   ما بيه حيل ارد اعليك ولي من يمي: {str(e)}"
+        return f"❌ مابيه حيل ارد اعليك ولي من يمي: {str(e)}"
 
 # --- واجهة المستخدم (مبسطة لتسريع الأداء) ---
-st.title("⚡ VIB ذكاء برق - نسخة Serverless")
+st.title("⚡ ذكاء برق - نسخة Serverless")
 
 # عرض المحادثة
 for message in st.session_state.messages:
