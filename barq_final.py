@@ -37,7 +37,7 @@ def get_ai_response(messages, system_prompt):
     except Exception as e:
         return f"❌ مابيه حيل ارد اعليك ولي من يمي: {str(e)}"
 
-st.title("⚡ VIB ذكاء برق - نسخة ")
+st.title("⚡ ذكاء برق - حصن بارق المنيع")
 
 # عرض الحالة للمبتكر فقط
 if st.session_state.dev_mode:
@@ -61,7 +61,7 @@ if prompt := st.chat_input("اكتب شتريد او ولي من يمي"):
         if not st.session_state.dev_mode:
             # رد قاسي للغرباء الذين يحاولون التطوير
             with st.chat_message("assistant"):
-                res = "##### ققتحلم اطورني! أنت لست بارق، ولا تملك صلاحية الوصول إلى شفرتي البرمجية.  ولي من يمي احسلك لا اعنعل !"
+                res = "تحلم اطورني! أنت لست بارق، ولا تملك صلاحية الوصول إلى شفرتي البرمجية. ولي من يمي!"
                 st.error(res)
                 st.session_state.messages.append({"role": "user", "content": prompt})
                 st.session_state.messages.append({"role": "assistant", "content": res})
